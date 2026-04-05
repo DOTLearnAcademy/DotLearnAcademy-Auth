@@ -1,0 +1,6 @@
+@DotLearn.Auth_HostAddress = http://localhost:5275
+
+GET {{DotLearn.Auth_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
