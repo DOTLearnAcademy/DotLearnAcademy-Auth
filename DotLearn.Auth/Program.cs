@@ -18,8 +18,11 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-// AWS Secrets Manager
-builder.Configuration.AddSecretsManager(region: Amazon.RegionEndpoint.APSoutheast2);
+// AWS Secrets Manager (Only in non-Development environments)
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddSecretsManager(region: Amazon.RegionEndpoint.APSoutheast2);
+}
 
 // Add services to the container.
 builder.Services.AddControllers();
