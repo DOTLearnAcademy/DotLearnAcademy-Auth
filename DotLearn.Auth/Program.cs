@@ -3,6 +3,11 @@ using DotLearn.Auth.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using Amazon;
+using Amazon.Extensions.NETCore.Setup;
+using Amazon.SecretsManager;
+using Kralizek.Extensions.Configuration;
+using DotLearn.Auth.Repositories;
+using DotLearn.Auth.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,18 +19,21 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // AWS Secrets Manager
-builder.Configuration.AddSecretsManager(region: RegionEndpoint.APSoutheast2);
+builder.Configuration.AddSecretsManager(region: Amazon.RegionEndpoint.APSoutheast2);
 
 // Add services to the container.
-var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connStr));
-
-builder.Services.AddHealthChecks().AddSqlServer(connStr);
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<UserDbContext>(options =>
+    options.UseSqlServer(connStr));
+
+builder.Services.AddHealthChecks().AddSqlServer(connStr, name: "sqlserver");
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Authentication & Authorization (Placeholder)
 builder.Services.AddAuthentication();

@@ -1,8 +1,0 @@
-C:\Users\samar\OneDrive\Desktop\DOTLearn_Academy\DotLearnAcademy-Auth\DotLearn.Auth\obj\Debug\net8.0\DotLearn.Auth.csproj.AssemblyReference.cache
-C:\Users\samar\OneDrive\Desktop\DOTLearn_Academy\DotLearnAcademy-Auth\DotLearn.Auth\obj\Debug\net8.0\DotLearn.Auth.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\samar\OneDrive\Desktop\DOTLearn_Academy\DotLearnAcademy-Auth\DotLearn.Auth\obj\Debug\net8.0\DotLearn.Auth.AssemblyInfoInputs.cache
-C:\Users\samar\OneDrive\Desktop\DOTLearn_Academy\DotLearnAcademy-Auth\DotLearn.Auth\obj\Debug\net8.0\DotLearn.Auth.AssemblyInfo.cs
-C:\Users\samar\OneDrive\Desktop\DOTLearn_Academy\DotLearnAcademy-Auth\DotLearn.Auth\obj\Debug\net8.0\DotLearn.Auth.csproj.CoreCompileInputs.cache
-C:\Users\samar\OneDrive\Desktop\DOTLearn_Academy\DotLearnAcademy-Auth\DotLearn.Auth\obj\Debug\net8.0\DotLearn.Auth.MvcApplicationPartsAssemblyInfo.cs
-C:\Users\samar\OneDrive\Desktop\DOTLearn_Academy\DotLearnAcademy-Auth\DotLearn.Auth\obj\Debug\net8.0\DotLearn.Auth.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\samar\OneDrive\Desktop\DOTLearn_Academy\DotLearnAcademy-Auth\DotLearn.Auth\obj\Debug\net8.0\DotLearn.Auth.sourcelink.json
