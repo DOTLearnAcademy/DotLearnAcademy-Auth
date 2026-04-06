@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DotLearn.Auth")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1c0838861847737a9cb813258f2fa352d1887443")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b4c621b1341e8893233e38c20ec2c54e5badbc10")]
 [assembly: System.Reflection.AssemblyProductAttribute("DotLearn.Auth")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DotLearn.Auth")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
