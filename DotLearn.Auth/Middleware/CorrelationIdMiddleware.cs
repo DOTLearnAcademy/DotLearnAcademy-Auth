@@ -15,7 +15,7 @@ public class CorrelationIdMiddleware
         }
 
         context.Items["CorrelationId"] = correlationId;
-        context.Response.Headers.Add(CorrelationIdHeader, correlationId);
+        context.Response.Headers.Append(CorrelationIdHeader, correlationId);
 
         using (Serilog.Context.LogContext.PushProperty("CorrelationId", correlationId))
         {
