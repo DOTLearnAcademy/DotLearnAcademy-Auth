@@ -239,6 +239,7 @@ PublishScripts/
 csx/
 *.build.csdef
 
+<<<<<<< Updated upstream
 # Microsoft Azure Emulator
 ecf/
 rcf/
@@ -426,3 +427,14 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+=======
+# Logs and Temps
+*.log
+*.tmp
+*.tmp_proj
+[Ll]og/
+[Ll]ogs/
+
+# Local Dev Factories
+DotLearn.Auth/Data/UserDbContextFactory.cs
+>>>>>>> Stashed changes
