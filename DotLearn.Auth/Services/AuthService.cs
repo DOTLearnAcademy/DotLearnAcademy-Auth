@@ -6,6 +6,7 @@ using DotLearn.Auth.Models.DTOs;
 using DotLearn.Auth.Models.Entities;
 using DotLearn.Auth.Repositories;
 using Microsoft.IdentityModel.Tokens;
+using Google.Apis.Auth;
 
 namespace DotLearn.Auth.Services;
 
@@ -64,6 +65,45 @@ public class AuthService : IAuthService
         // Invalidate old token immediately
         user.RefreshToken = null;
         await _userRepository.UpdateAsync(user);
+
+        var tokens = GenerateTokens(user);
+        user.RefreshToken = tokens.RefreshToken;
+        user.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+        await _userRepository.UpdateAsync(user);
+
+        return tokens;
+    }
+
+    public async Task<AuthResponseDto> GoogleLoginAsync(GoogleLoginRequestDto request)
+    {
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            // Cryptographically verify the Google JWT against Google's public certificates
+            payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken);
+        }
+        catch (InvalidJwtException)
+        {
+            throw new UnauthorizedAccessException("Invalid Google token.");
+        }
+
+        // Check if user already exists
+        var user = await _userRepository.GetByEmailAsync(payload.Email);
+        
+        if (user == null)
+        {
+            // Frictionless Onboarding: Automatically register them as a Student
+            user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = payload.Email,
+                FullName = payload.Name ?? "Google User",
+                PasswordHash = "GOOGLE_OAUTH_USER", // No actual password
+                Role = "Student"
+            };
+            
+            await _userRepository.AddAsync(user);
+        }
 
         var tokens = GenerateTokens(user);
         user.RefreshToken = tokens.RefreshToken;

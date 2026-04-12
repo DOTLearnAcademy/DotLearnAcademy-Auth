@@ -52,6 +52,22 @@ public class AuthController : ControllerBase
         }
     }
 
+    // POST /api/auth/google-login
+    [HttpPost("google-login")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequestDto request)
+    {
+        try
+        {
+            var result = await _authService.GoogleLoginAsync(request);
+            return Ok(result);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized(new { error = "Invalid Google Sign-In credentials." });
+        }
+    }
+
     // POST /api/auth/refresh
     [HttpPost("refresh")]
     [AllowAnonymous]
