@@ -2,6 +2,8 @@ using DotLearn.Auth.Models.DTOs;
 using DotLearn.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Cryptography;
+using Microsoft.IdentityModel.Tokens;
 
 namespace DotLearn.Auth.Controllers;
 
@@ -10,10 +12,12 @@ namespace DotLearn.Auth.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IConfiguration _configuration;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, IConfiguration configuration)
     {
         _authService = authService;
+        _configuration = configuration;
     }
 
     // POST /api/auth/register
@@ -89,5 +93,29 @@ public class AuthController : ControllerBase
         {
             return BadRequest(new { error = ex.Message });
         }
+    }
+
+    [HttpGet("/auth/.well-known/jwks.json")]
+    [AllowAnonymous]
+    public IActionResult GetJwks()
+    {
+        var rsaKey = _configuration["dotlearn/jwt-private-key"];
+        using var rsa = RSA.Create();
+        rsa.ImportFromPem(rsaKey);
+        var parameters = rsa.ExportParameters(false); // public key only
+        var jwks = new
+        {
+            keys = new[]
+            {
+                new
+                {
+                    kty = "RSA", use = "sig", alg = "RS256",
+                    kid = "dotlearn-key-1",
+                    n = Base64UrlEncoder.Encode(parameters.Modulus),
+                    e = Base64UrlEncoder.Encode(parameters.Exponent)
+                }
+            }
+        };
+        return Ok(jwks);
     }
 }
