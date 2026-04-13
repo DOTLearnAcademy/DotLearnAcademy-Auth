@@ -1,6 +1,6 @@
 namespace DotLearn.Auth.Models.DTOs;
 
-public record RegisterRequestDto(string FullName, string Email, string Password);
+public record RegisterRequestDto(string FullName, string Email, string Password, string Role = "Student");
 
 public record LoginRequestDto(string Email, string Password);
 

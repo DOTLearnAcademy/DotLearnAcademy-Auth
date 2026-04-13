@@ -32,7 +32,7 @@ public class AuthService : IAuthService
             FullName = request.FullName,
             Email = request.Email,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12),
-            Role = "Student"
+            Role = string.IsNullOrWhiteSpace(request.Role) ? "Student" : request.Role
         };
 
         await _userRepository.AddAsync(user);
