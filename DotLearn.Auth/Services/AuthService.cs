@@ -7,6 +7,7 @@ using DotLearn.Auth.Models.Entities;
 using DotLearn.Auth.Repositories;
 using Microsoft.IdentityModel.Tokens;
 using Google.Apis.Auth;
+using System.Security.Cryptography;
 
 namespace DotLearn.Auth.Services;
 
@@ -150,9 +151,18 @@ public class AuthService : IAuthService
 
     private string GenerateJwt(User user)
     {
-        var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"] ?? "placeholder-key-32-chars-minimum!"));
-        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var rsaKey = _configuration["dotlearn/jwt-private-key"];
+        var rsa = RSA.Create();
+        rsa.ImportFromPem(rsaKey);
+        
+        // Export/Import into a new RSA to use with credentials without disposing
+        var rsaParameters = rsa.ExportParameters(true);
+        var rsaForCredentials = RSA.Create();
+        rsaForCredentials.ImportParameters(rsaParameters);
+
+        var credentials = new SigningCredentials(
+            new RsaSecurityKey(rsaForCredentials) { KeyId = "dotlearn-key-1" },
+            SecurityAlgorithms.RsaSha256);
 
         var claims = new[]
         {
