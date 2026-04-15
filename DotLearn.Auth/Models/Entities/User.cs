@@ -7,13 +7,16 @@ public class User
     public string? PasswordHash { get; set; }
     public string FullName { get; set; } = null!;
     public string Role { get; set; } = "Student";
-    public string? AvatarS3Key { get; set; }
-    public string? OAuthProvider { get; set; }
-    public string? OAuthSubject { get; set; }
+    
+    public string AuthProvider { get; set; } = "Local"; // Local or Google
+    public string? GoogleSubjectId { get; set; }
+    public string? ProfileImageUrl { get; set; }
+
     public string? RefreshToken { get; set; }
     public DateTime? RefreshTokenExpiry { get; set; }
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetExpiry { get; set; }
+    
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

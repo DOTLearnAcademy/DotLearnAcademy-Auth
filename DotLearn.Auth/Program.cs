@@ -8,6 +8,7 @@ using Amazon.SecretsManager;
 using Kralizek.Extensions.Configuration;
 using DotLearn.Auth.Repositories;
 using DotLearn.Auth.Services;
+using DotLearn.Auth.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +37,7 @@ builder.Services.AddDbContext<UserDbContext>(options =>
 builder.Services.AddHealthChecks().AddSqlServer(connStr, name: "sqlserver");
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
 // Authentication & Authorization (Placeholder)

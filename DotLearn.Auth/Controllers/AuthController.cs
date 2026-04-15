@@ -1,9 +1,13 @@
-using DotLearn.Auth.Models.DTOs;
+using DotLearn.Auth.Dtos.Auth;
+using DotLearn.Auth.Dtos.Profile;
 using DotLearn.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
+using DotLearn.Auth.Models.DTOs;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace DotLearn.Auth.Controllers;
 
@@ -52,11 +56,16 @@ public class AuthController : ControllerBase
         }
     }
 
-    // POST /api/auth/google-login
-    [HttpPost("google-login")]
+    // POST /api/auth/google
+    [HttpPost("google")]
     [AllowAnonymous]
-    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginRequestDto request)
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleAuthRequestDto request)
     {
+        if (string.IsNullOrEmpty(request.IdToken))
+        {
+            return BadRequest(new { error = "Invalid Google token" });
+        }
+
         try
         {
             var result = await _authService.GoogleLoginAsync(request);
@@ -65,6 +74,22 @@ public class AuthController : ControllerBase
         catch (UnauthorizedAccessException)
         {
             return Unauthorized(new { error = "Invalid Google Sign-In credentials." });
+        }
+    }
+
+    // POST /api/auth/google/complete
+    [HttpPost("google/complete")]
+    [AllowAnonymous]
+    public async Task<IActionResult> CompleteGoogleSignup([FromBody] GoogleCompleteSignupRequestDto request)
+    {
+        try
+        {
+            var result = await _authService.CompleteGoogleSignupAsync(request);
+            return Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -111,13 +136,59 @@ public class AuthController : ControllerBase
         }
     }
 
+    [Authorize]
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile()
+    {
+        var userId = GetUserId();
+        var result = await _authService.GetProfileAsync(userId);
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpPut("profile")]
+    public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileRequestDto request)
+    {
+        var userId = GetUserId();
+        var result = await _authService.UpdateProfileAsync(userId, request);
+        return Ok(result);
+    }
+
+    private Guid GetUserId()
+    {
+        var userId =
+            User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirst("sub")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new UnauthorizedAccessException("User ID not found.");
+
+        return Guid.Parse(userId);
+    }
+
     [HttpGet("/auth/.well-known/jwks.json")]
     [AllowAnonymous]
     public IActionResult GetJwks()
     {
-        var rsaKey = _configuration["dotlearn/jwt-private-key"];
+        var privateKeyPem = _configuration["Jwt:PrivateKeyPem"];
+
+        if (string.IsNullOrWhiteSpace(privateKeyPem))
+        {
+            var pemPath = _configuration["Jwt:PrivateKeyPath"];
+            if (!string.IsNullOrWhiteSpace(pemPath) && System.IO.File.Exists(pemPath))
+            {
+                privateKeyPem = System.IO.File.ReadAllText(pemPath);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(privateKeyPem))
+            throw new InvalidOperationException("JWT private key is not configured.");
+
+        privateKeyPem = privateKeyPem.Replace("\\n", "\n").Trim();
+
         using var rsa = RSA.Create();
-        rsa.ImportFromPem(rsaKey);
+        rsa.ImportFromPem(privateKeyPem);
         var parameters = rsa.ExportParameters(false); // public key only
         var jwks = new
         {

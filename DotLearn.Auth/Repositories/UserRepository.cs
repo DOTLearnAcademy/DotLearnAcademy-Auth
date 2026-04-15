@@ -27,7 +27,7 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByOAuthSubjectAsync(string provider, string subject) =>
         await _context.Users.FirstOrDefaultAsync(u => 
-            u.OAuthProvider == provider && u.OAuthSubject == subject);
+            u.AuthProvider == provider && u.GoogleSubjectId == subject);
 
     public async Task<bool> EmailExistsAsync(string email) =>
         await _context.Users.AnyAsync(u => u.Email == email);
