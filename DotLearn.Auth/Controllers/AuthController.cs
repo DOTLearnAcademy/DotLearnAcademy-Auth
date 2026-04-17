@@ -24,6 +24,14 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
+    [HttpGet("users")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetAllUsers([FromQuery] string? q, [FromQuery] string? role)
+    {
+        var users = await _authService.GetAllUsersAsync(q, role);
+        return Ok(users);
+    }
+
     // POST /api/auth/register
     [HttpPost("register")]
     [AllowAnonymous]

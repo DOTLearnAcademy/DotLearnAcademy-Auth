@@ -43,4 +43,27 @@ public class UserRepository : IUserRepository
         _context.Users.Update(user);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<IEnumerable<User>> GetAllUsersAsync(string? query, string? role)
+    {
+        var q = _context.Users.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var lowercaseQuery = query.ToLower();
+            q = q.Where(u => u.Email.ToLower().Contains(lowercaseQuery) || u.FullName.ToLower().Contains(lowercaseQuery));
+        }
+
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            q = q.Where(u => u.Role == role);
+        }
+
+        return await q.OrderByDescending(u => u.CreatedAt).ToListAsync();
+    }
+
+    public async Task<int> GetActiveAdminCountAsync()
+    {
+        return await _context.Users.CountAsync(u => u.Role == "Admin" && u.IsActive && !u.IsDeleted);
+    }
 }

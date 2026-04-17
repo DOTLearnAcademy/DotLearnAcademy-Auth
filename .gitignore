@@ -45,3 +45,5 @@ publish-*/
 publish-v*
 *.sql
 migration_error_capture.txt
+
+*.pem

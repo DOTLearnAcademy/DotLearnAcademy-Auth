@@ -54,6 +54,9 @@ public class AuthService : IAuthService
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid credentials");
 
+        if (!user.IsActive || user.IsDeleted)
+            throw new UnauthorizedAccessException("Account is suspended or deleted.");
+
         var tokens = await GenerateTokensAsync(user);
         return tokens;
     }
@@ -64,6 +67,9 @@ public class AuthService : IAuthService
 
         if (user == null || user.RefreshTokenExpiry < DateTime.UtcNow)
             throw new UnauthorizedAccessException("Invalid or expired refresh token");
+
+        if (!user.IsActive || user.IsDeleted)
+            throw new UnauthorizedAccessException("Account is suspended or deleted.");
 
         // Invalidate old token immediately
         user.RefreshToken = null;
@@ -91,6 +97,9 @@ public class AuthService : IAuthService
 
         if (user != null)
         {
+            if (!user.IsActive || user.IsDeleted)
+                throw new UnauthorizedAccessException("Account is suspended or deleted.");
+
             if (string.IsNullOrWhiteSpace(user.GoogleSubjectId))
             {
                 user.GoogleSubjectId = googleSubjectId;
@@ -211,6 +220,63 @@ public class AuthService : IAuthService
         await _userRepository.UpdateAsync(user);
 
         return true;
+    }
+
+    // ─── ADMIN OPERATIONS ────────────────────────────────────────────────────────
+
+    public async Task<IEnumerable<AuthUserDto>> GetAllUsersAsync(string? query, string? role)
+    {
+        var users = await _userRepository.GetAllUsersAsync(query, role);
+        return users.Select(MapUser);
+    }
+
+    public async Task SuspendUserAsync(Guid targetUserId, Guid currentAdminId)
+    {
+        if (targetUserId == currentAdminId)
+            throw new InvalidOperationException("You cannot suspend your own account.");
+
+        var user = await _userRepository.GetByIdAsync(targetUserId)
+            ?? throw new KeyNotFoundException("User not found.");
+
+        if (user.Role == "Admin")
+        {
+            var activeAdmins = await _userRepository.GetActiveAdminCountAsync();
+            if (activeAdmins <= 1 && user.IsActive && !user.IsDeleted)
+                throw new InvalidOperationException("Cannot suspend the only active administrator.");
+        }
+
+        user.IsActive = false;
+        await _userRepository.UpdateAsync(user);
+    }
+
+    public async Task UnsuspendUserAsync(Guid targetUserId)
+    {
+        var user = await _userRepository.GetByIdAsync(targetUserId)
+            ?? throw new KeyNotFoundException("User not found.");
+
+        user.IsActive = true;
+        await _userRepository.UpdateAsync(user);
+    }
+
+    public async Task DeleteUserAsync(Guid targetUserId, Guid currentAdminId)
+    {
+        if (targetUserId == currentAdminId)
+            throw new InvalidOperationException("You cannot delete your own account.");
+
+        var user = await _userRepository.GetByIdAsync(targetUserId)
+            ?? throw new KeyNotFoundException("User not found.");
+
+        if (user.Role == "Admin")
+        {
+            var activeAdmins = await _userRepository.GetActiveAdminCountAsync();
+            if (activeAdmins <= 1 && user.IsActive && !user.IsDeleted)
+                throw new InvalidOperationException("Cannot delete the only active administrator.");
+        }
+
+        user.IsActive = false;
+        user.IsDeleted = true;
+        
+        await _userRepository.UpdateAsync(user);
     }
 
     private AuthUserDto MapUser(User user)

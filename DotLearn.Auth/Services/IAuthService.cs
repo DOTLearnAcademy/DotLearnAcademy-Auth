@@ -17,4 +17,10 @@ public interface IAuthService
 
     Task<ProfileResponseDto> GetProfileAsync(Guid userId);
     Task<ProfileResponseDto> UpdateProfileAsync(Guid userId, UpdateProfileRequestDto request);
+
+    // Admin Operations
+    Task<IEnumerable<AuthUserDto>> GetAllUsersAsync(string? query, string? role);
+    Task SuspendUserAsync(Guid targetUserId, Guid currentAdminId);
+    Task UnsuspendUserAsync(Guid targetUserId);
+    Task DeleteUserAsync(Guid targetUserId, Guid currentAdminId);
 }
