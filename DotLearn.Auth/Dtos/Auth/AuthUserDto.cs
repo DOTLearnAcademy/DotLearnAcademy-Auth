@@ -10,4 +10,6 @@ public class AuthUserDto
     public string Role { get; set; }
     public string AuthProvider { get; set; }
     public string? ProfileImageUrl { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
 }

@@ -1,6 +1,7 @@
 using DotLearn.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace DotLearn.Auth.Controllers;
@@ -22,8 +23,7 @@ public class AdminUsersController : ControllerBase
     {
         try
         {
-            var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(adminIdStr, out var adminId)) return Unauthorized();
+            var adminId = GetAdminId();
 
             await _authService.SuspendUserAsync(id, adminId);
             return NoContent();
@@ -31,6 +31,10 @@ public class AdminUsersController : ControllerBase
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
         }
         catch (KeyNotFoundException)
         {
@@ -57,8 +61,7 @@ public class AdminUsersController : ControllerBase
     {
         try
         {
-            var adminIdStr = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (!Guid.TryParse(adminIdStr, out var adminId)) return Unauthorized();
+            var adminId = GetAdminId();
 
             await _authService.DeleteUserAsync(id, adminId);
             return NoContent();
@@ -67,9 +70,26 @@ public class AdminUsersController : ControllerBase
         {
             return BadRequest(new { message = ex.Message });
         }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized();
+        }
         catch (KeyNotFoundException)
         {
             return NotFound(new { message = "User not found" });
         }
+    }
+
+    private Guid GetAdminId()
+    {
+        var adminId =
+            User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            User.FindFirst("sub")?.Value;
+
+        if (string.IsNullOrWhiteSpace(adminId) || !Guid.TryParse(adminId, out var parsed))
+            throw new UnauthorizedAccessException("Admin user ID not found in token.");
+
+        return parsed;
     }
 }

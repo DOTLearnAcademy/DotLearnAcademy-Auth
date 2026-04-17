@@ -9,6 +9,9 @@ using Kralizek.Extensions.Configuration;
 using DotLearn.Auth.Repositories;
 using DotLearn.Auth.Services;
 using DotLearn.Auth.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,8 +43,59 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
-// Authentication & Authorization (Placeholder)
-builder.Services.AddAuthentication();
+// Authentication & Authorization
+var jwksUri = builder.Configuration["Auth:JwksUri"]
+    ?? "http://auth/auth/.well-known/jwks.json";
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.MapInboundClaims = false;
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = "dotlearn-auth",
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKeyResolver = (token, securityToken, kid, parameters) =>
+            {
+                using var http = new HttpClient();
+                var json = http.GetStringAsync(jwksUri).GetAwaiter().GetResult();
+                var jwks = new JsonWebKeySet(json);
+                return jwks.GetSigningKeys();
+            },
+            NameClaimType = "sub",
+            RoleClaimType = "role"
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                // Normalize role claims so [Authorize(Roles = "...")] works
+                // regardless of whether token used "role", "roles" or schema URI.
+                if (context.Principal?.Identity is ClaimsIdentity identity)
+                {
+                    var roleCandidates = identity.FindAll("role").Select(c => c.Value)
+                        .Concat(identity.FindAll("roles").Select(c => c.Value))
+                        .Concat(identity.FindAll(ClaimTypes.Role).Select(c => c.Value))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+
+                    foreach (var role in roleCandidates)
+                    {
+                        if (!identity.HasClaim(ClaimTypes.Role, role))
+                            identity.AddClaim(new Claim(ClaimTypes.Role, role));
+                    }
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
 builder.Services.AddAuthorization();
 
 // CORS — DOT-24 Security Lockdown

@@ -288,7 +288,9 @@ public class AuthService : IAuthService
             Email = user.Email,
             Role = user.Role,
             AuthProvider = user.AuthProvider ?? "Local",
-            ProfileImageUrl = user.ProfileImageUrl
+            ProfileImageUrl = user.ProfileImageUrl,
+            IsActive = user.IsActive,
+            CreatedAt = user.CreatedAt
         };
     }
 
@@ -343,7 +345,9 @@ public class AuthService : IAuthService
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim("role", user.Role),
             new Claim(ClaimTypes.Role, user.Role),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new Claim(JwtRegisteredClaimNames.Iat,
