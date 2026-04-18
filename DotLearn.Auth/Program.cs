@@ -30,6 +30,8 @@ if (!builder.Environment.IsDevelopment())
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddTransient<DotLearn.Auth.Middleware.CorrelationIdDelegatingHandler>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
